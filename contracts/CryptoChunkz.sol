@@ -21,7 +21,17 @@ contract CryptoChunkz is ERC721Enumerable, Ownable {
         Reverse,
         Wild
     }
+    struct Metadata {
+        address sender;
+        uint256 date;
+        uint256 amount;
+        uint256 tokenId;
+    }
     mapping(tokenType => bool) private isSaleActive;
+    
+    mapping(string => Metadata) public hashToMetadata;
+
+    event Signed(string hash, address sender, uint256 date, uint256 amount);
 
     constructor() ERC721("CryptoChunkz", "CHEEZ_NFT") {
     }
@@ -34,7 +44,30 @@ contract CryptoChunkz is ERC721Enumerable, Ownable {
         return isSaleActive[_tokenType];
     }
 
+
+    function sign(string memory hash, uint amount, uint256 tokenId) public {
+        hashToMetadata[hash] = Metadata(msg.sender, block.timestamp, amount,tokenId);
+        emit Signed(hash, msg.sender, block.timestamp, amount);
+    }
+
+    function verifyAndSend(string memory hash) public view returns (address sender, uint256 date) {
+        Metadata memory metadata = hashToMetadata[hash];
+        require(metadata.date > 0, "Invalid Signature");
+        return (metadata.sender, metadata.date);
+    }
+
     function mintItem(address account, string memory uri, tokenType _tokenType ) public returns (uint256) {
+        require(isSaleActive[_tokenType], "sale is not active");
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(account, newItemId);
+        _setTokenURI(newItemId, uri);
+
+        return newItemId;
+    }
+
+    function claimReverse(address account, string memory uri, tokenType _tokenType ) public returns (uint256) {
         require(isSaleActive[_tokenType], "sale is not active");
         _tokenIds.increment();
 
@@ -52,7 +85,7 @@ contract CryptoChunkz is ERC721Enumerable, Ownable {
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+        require(_exists(tokenId), "URI query for nonexistent token");
 
         string memory _tokenURI = _tokenURIs[tokenId];
         string memory base = _baseURI();
