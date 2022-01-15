@@ -1,1 +1,1 @@
-Cheez NFTS!!
+ERC721 Token
