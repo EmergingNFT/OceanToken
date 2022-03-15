@@ -21,12 +21,14 @@ contract CryptoChunkz is ERC721Enumerable, Ownable {
         Reverse,
         Wild
     }
+    
     struct Metadata {
         address sender;
         uint256 date;
         uint256 amount;
         uint256 tokenId;
     }
+    
     mapping(tokenType => bool) private isSaleActive;
     
     mapping(string => Metadata) public hashToMetadata;
